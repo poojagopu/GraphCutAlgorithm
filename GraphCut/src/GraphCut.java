@@ -2,18 +2,29 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.InputStream;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.*;
 
 public class GraphCut {
     public static void main(String[] args) throws IOException {
+        Timestamp start= Timestamp.from(Instant.now());
         //System.out.println("Hello world!");
         ArrayList<ArrayList<RGB>> srcPixelValues = new ArrayList<>();
         ArrayList<ArrayList<RGB>> targetPixelValues = new ArrayList<>();
         ArrayList<ArrayList<RGB>> maskPixelValues = new ArrayList<>();
-        //Reading the image
-        //File src= new File("C:\\Users\\pooja\\IdeaProjects\\GraphCut\\src.jpg");
-        //File target= new File("C:\\Users\\pooja\\IdeaProjects\\GraphCut\\target.jpg");
+
+        /*//getting filenames from config
+        Properties prop = new Properties();
+        String fileName = "/Users/akshithreddyc/Desktop/Workplace/GraphCut/config/config.properties";
+        //
+        // InputStream inputStream = getClass().getClassLoader().getResourceAsStream(fileName);
+        prop.load(new FileInputStream(fileName));
+        String source = prop.getProperty("source");*/
+
         File src= new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/src.jpeg");
         File target= new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/target.jpeg");
         File mask= new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/mask.jpg");
@@ -66,6 +77,10 @@ public class GraphCut {
         //System.out.println(maskPixelValues.size()+" "+maskPixelValues.get(0).size());
 
         edmondsKarp(buildGraph(targetPixelValues, srcPixelValues, maskPixelValues));
+
+        Timestamp end= Timestamp.from(Instant.now());
+
+        System.out.println(start + " "+ end);
     }
 
     public static ArrayList<Node> buildGraph(ArrayList<ArrayList<RGB>> target, ArrayList<ArrayList<RGB>> src,
@@ -74,7 +89,10 @@ public class GraphCut {
         ArrayList<Node> adjList = new ArrayList<>();
         int leftWeight = 0, rightWeight = 0, topWeight = 0, bottomWeight = 0;
         boolean isSource, isTarget;
-        PixelPos leftPixel = null, rightPixel = null, topPixel = null, bottomPixel = null;
+        PixelPos leftPixel = new PixelPos(-1, -1, false,false),
+                rightPixel = new PixelPos(-1, -1, false,false),
+                topPixel = new PixelPos(-1, -1, false,false),
+                bottomPixel = new PixelPos(-1, -1, false,false);
         //int edgeWeight = 0;
         //calculating edge weights for 4 neighbors of each pixel
         //and if the node is from source or target and building an adjacency list
@@ -125,12 +143,41 @@ public class GraphCut {
             }
         }
 
-        System.out.println(adjList.size());
+        System.out.println(adjList.toString());
 
         return adjList;
     }
 
-    public static void edmondsKarp(ArrayList<Node> adjList) {
+    public static void edmondsKarp(ArrayList<Node> graph) {
+        while (true) {
+            final Queue<Node> bfsQ = new ArrayDeque<>();
+            boolean[] visitedArray = new boolean[graph.size()];
+
+            bfsQ.add(graph.get(graph.size() - 1));
+
+            for (int i = 0; i < graph.size(); ++i) {
+                visitedArray[i] = false;
+            }
+            visitedArray[graph.size()] = true;
+
+            boolean check = false;
+            Node current = null;
+            while (!bfsQ.isEmpty()) {
+                current = bfsQ.peek();
+                if(current.position.isTarget) {
+                    check = true;
+                    break;
+                }
+                bfsQ.remove();
+                for (int i = 0; i < graph.size(); ++i) {
+                    /*if (!visitedArray[i] && capacity[current][i] > flow[current][i]) {
+                        visited[i] = true;
+                        Q.add(i);
+                        parent[i] = current;
+                    }*/
+                }
+            }
+        }
     }
 
     /*public static int BFS(PixelPos source){
