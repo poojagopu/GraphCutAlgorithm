@@ -1,20 +1,27 @@
-public class Adjacency {
+public class Node {
     public PixelPos position;
     public int[] edgeWeights;
     public PixelPos[] neighbours;
+    //public boolean isSourcePixel;
 
-    public Adjacency(int rowPos, int colPos, int leftWeight, int rightWeight, int topWeight, int bottomWeight){
-        this.position = new PixelPos(rowPos, colPos);
+    public Node(int rowPos, int colPos, int leftWeight, int rightWeight, int topWeight, int bottomWeight,
+                boolean isSourcePixel, boolean isTargetPixel, PixelPos left, PixelPos right, PixelPos top,
+                PixelPos bottom) {
+        this.position = new PixelPos(rowPos, colPos, isSourcePixel, isTargetPixel);
+
         this.edgeWeights = new int[4];
         this.edgeWeights[0] = leftWeight;
         this.edgeWeights[1] = rightWeight;
         this.edgeWeights[2] = topWeight;
         this.edgeWeights[3] = bottomWeight;
+
         this.neighbours = new PixelPos[4];
-        neighbours[0] = new PixelPos(rowPos - 1, colPos);
-        neighbours[1] = new PixelPos(rowPos + 1, colPos);
-        neighbours[2] = new PixelPos(rowPos, colPos + 1);
-        neighbours[3] = new PixelPos(rowPos, colPos + 1);
+        this.neighbours[0] = left;//new PixelPos(rowPos - 1, colPos, isSourcePixel, isTargetPixel);
+        this.neighbours[1] = right;//new PixelPos(rowPos + 1, colPos, isSourcePixel, isTargetPixel);
+        this.neighbours[2] = top;//null;//new PixelPos(rowPos, colPos + 1);
+        this.neighbours[3] = bottom;//null;//new PixelPos(rowPos, colPos - 1);
+
+        //this.isSourcePixel = isSourcePixel;
     }
 
     @Override
@@ -46,9 +53,30 @@ class PixelPos{
 
     int rowPos;
     int colPos;
-    PixelPos(int rowPos, int colPos) {
+    boolean isSource;
+
+    public boolean isSource() {
+        return isSource;
+    }
+
+    public void setSource(boolean source) {
+        isSource = source;
+    }
+
+    public boolean isTarget() {
+        return isTarget;
+    }
+
+    public void setTarget(boolean target) {
+        isTarget = target;
+    }
+
+    boolean isTarget;
+    public PixelPos(int rowPos, int colPos, boolean isSource, boolean isTarget) {
         this.rowPos = rowPos;
         this.colPos = colPos;
+        this.isSource = isSource;
+        this.isTarget = isTarget;
     }
 
     @Override
