@@ -34,7 +34,7 @@ public class Node {
     }
 }
 
-class PixelPos{
+class PixelPos {
     public int getRowPos() {
         return rowPos;
     }
