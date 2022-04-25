@@ -5,9 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Queue;
+import java.util.*;
 
 public class GraphCut {
     public static void main(String[] args) throws IOException {
@@ -27,7 +25,7 @@ public class GraphCut {
 
         File src= new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/src.jpeg");
         File target= new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/target.jpeg");
-        File mask= new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/mask.jpg");
+        File mask= new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/mask.jpeg");
         BufferedImage srcImg = ImageIO.read(src);
         BufferedImage targetImg = ImageIO.read(target);
         BufferedImage maskImg = ImageIO.read(mask);
@@ -59,6 +57,8 @@ public class GraphCut {
             }
             targetPixelValues.add(rowValues);
         }
+        HashSet<Integer> srcNodes = new HashSet<>();
+        HashSet<Integer> targetNodes = new HashSet<>();
 
         for (int j = 0; j < maskImg.getWidth(); j++) {
             ArrayList<RGB> rowValues = new ArrayList<>();
@@ -69,6 +69,11 @@ public class GraphCut {
                 Color color = new Color(pixel, true);
                 //Retrieving the R G B values
                 RGB temp = new RGB(color.getRed(),color.getGreen(),color.getBlue());
+                if(temp.isWhite()){
+                    srcNodes.add(i * 100 + j);
+                } else {
+                    targetNodes.add(i * 100 + j);
+                }
                 rowValues.add(temp);
             }
             maskPixelValues.add(rowValues);
@@ -78,8 +83,32 @@ public class GraphCut {
 
         //edmondsKarp(buildGraph(targetPixelValues, srcPixelValues, maskPixelValues));
 
-        adjacencyMatrix(targetPixelValues, srcPixelValues, maskPixelValues);
+        //edmondsKarp(adjacencyMatrix(targetPixelValues, srcPixelValues, maskPixelValues), 9999, 0);
 
+        Vertex[][] test = new Vertex[6][6];
+        test[0][1] =new Vertex(false, false, 16);
+        test[0][2] =new Vertex(false, false, 13);
+        test[1][2] =new Vertex(false, false, 10);
+        test[1][3] =new Vertex(false, false, 12);
+        test[2][1] =new Vertex(false, false, 4);
+        test[2][4] =new Vertex(false, false, 14);
+        test[3][2] =new Vertex(false, false, 9);
+        test[3][5] =new Vertex(false, false, 20);
+        test[4][3] =new Vertex(false, false, 7);
+        test[4][5] =new Vertex(false, false, 4);
+        test[5][0] =new Vertex(false, false, 0);
+
+        int graph[][] = { {0, 16, 13, 0, 0, 0},
+                {0, 0, 10, 12, 0, 0},
+                {0, 4, 0, 0, 14, 0},
+                {0, 0, 9, 0, 0, 20},
+                {0, 0, 0, 7, 0, 4},
+                {0, 0, 0, 0, 0, 0}
+        };
+        edmondsKarp(adjacencyMatrix(targetPixelValues, srcPixelValues, maskPixelValues, srcNodes, targetNodes),
+                0, 9999);
+        //minCut(test, 0, 5);
+        //bfsNew(adjacencyMatrix(targetPixelValues, srcPixelValues, maskPixelValues, srcNodes, targetNodes));
         Timestamp end= Timestamp.from(Instant.now());
 
         System.out.println(start + " "+ end);
@@ -150,40 +179,47 @@ public class GraphCut {
         return adjList;
     }
 
-    public static void adjacencyMatrix(ArrayList<ArrayList<RGB>> target, ArrayList<ArrayList<RGB>> src,
-                                             ArrayList<ArrayList<RGB>> mask) {
+    public static Vertex[][] adjacencyMatrix(ArrayList<ArrayList<RGB>> target, ArrayList<ArrayList<RGB>> src,
+                                             ArrayList<ArrayList<RGB>> mask, HashSet<Integer> sourceNodes,
+                                             HashSet<Integer> targetNodes) {
         //adjacency list
         ArrayList<Node> adjList = new ArrayList<>();
         int pixelNumber = 0;
-        Vertex[][] adjMatrix = new Vertex[95663][95663];
+        Vertex[][] adjMatrix = new Vertex[10000][10000];
         int leftWeight = 0, rightWeight = 0, topWeight = 0, bottomWeight = 0;
         boolean isSource, isTarget;
-        Vertex leftPixel = new Vertex(false,false,0),
-                rightPixel = new Vertex(false,false,0),
-                topPixel = new Vertex(false,false,0),
-                bottomPixel = new Vertex(false,false,0);
+        Vertex leftPixel = new Vertex(false,false,Integer.MIN_VALUE),
+                rightPixel = new Vertex(false,false,Integer.MIN_VALUE),
+                topPixel = new Vertex(false,false,Integer.MIN_VALUE),
+                bottomPixel = new Vertex(false,false,Integer.MIN_VALUE);
         //int edgeWeight = 0;
         //calculating edge weights for 4 neighbors of each pixel
         //and if the node is from source or target and building an adjacency list
-        for(int i = 0; i < 3; i++){
-            for(int j = 0; j < 3; j++){
+        for(int i = 0; i < 100; i++){
+            for(int j = 0; j < 100; j++){
                 //left neighbor
                 if(j - 1 >= 0) {
                     leftWeight = (int) Math.pow(src.get(i).get(j).difference(target.get(i).get(j)), 2) +
                             (int) Math.pow(src.get(i).get(j - 1).difference(target.get(i).get(j - 1)), 2);
 
-                    leftPixel = new Vertex( mask.get(i).get(j - 1).isWhite(),mask.get(i).get(j - 1).isBlack(),leftWeight);
+                    leftPixel = new Vertex(mask.get(i).get(j - 1).isWhite(),mask.get(i).get(j - 1).isBlack(),leftWeight);
 
-                    adjMatrix[i * 3 + j][pixelNumber - 1] = leftPixel;
+                    adjMatrix[i * 100 + j][pixelNumber - 1] = leftPixel;
+                    /*ArrayList<Vertex> temp = adjMatrix.get(i * adjMatrix.size() + j);
+                    temp.set(pixelNumber - 1, leftPixel);
+                    adjMatrix.set(i * adjMatrix.size() + j, temp);*/
                 }
                 //right neighbor
-                if(j + 1 < 3) {
+                if(j + 1 < 100) {
                     rightWeight = (int) Math.pow(src.get(i).get(j).difference(target.get(i).get(j)), 2) +
                             (int) Math.pow(src.get(i).get(j + 1).difference(target.get(i).get(j + 1)), 2);
 
                     rightPixel = new Vertex( mask.get(i).get(j + 1).isWhite(),mask.get(i).get(j + 1).isBlack(),rightWeight);
 
-                    adjMatrix[i * 3 + j][pixelNumber + 1] = rightPixel;
+                    adjMatrix[i * 100 + j][pixelNumber + 1] = rightPixel;
+                    /*ArrayList<Vertex> temp = adjMatrix.get(i * adjMatrix.size() + j);
+                    temp.set(pixelNumber + 1, topPixel);
+                    adjMatrix.set(i * adjMatrix.size() + j, temp);*/
                 }
                 //top
                 if(i - 1 >= 0) {
@@ -192,16 +228,22 @@ public class GraphCut {
 
                     topPixel = new Vertex( mask.get(i - 1).get(j).isWhite(),mask.get(i - 1).get(j).isBlack(),topWeight);
 
-                    adjMatrix[i * 3 + j][pixelNumber - 3] = topPixel;
+                    adjMatrix[i * 100 + j][pixelNumber - 100] = topPixel;
+                    /*ArrayList<Vertex> temp = adjMatrix.get(i * adjMatrix.size() + j);
+                    temp.set(pixelNumber - adjMatrix.size(), topPixel);
+                    adjMatrix.set(i * adjMatrix.size() + j, temp);*/
                 }
                 //bottom
-                if(i + 1 < 3) {
+                if(i + 1 < 100) {
                     bottomWeight = (int) Math.pow(src.get(i).get(j).difference(target.get(i).get(j)), 2) +
                             (int) Math.pow(src.get(i + 1).get(j).difference(target.get(i + 1).get(j)), 2);
 
                     bottomPixel = new Vertex( mask.get(i + 1).get(j).isWhite(),mask.get(i + 1).get(j).isBlack(),bottomWeight);
 
-                    adjMatrix[i * 3 + j][pixelNumber + 3] = bottomPixel;
+                    adjMatrix[i * 100 + j][pixelNumber + 100] = bottomPixel;
+                    /*ArrayList<Vertex> temp = adjMatrix.get(i * adjMatrix.size() + j);
+                    temp.set(pixelNumber + adjMatrix.size(), bottomPixel);
+                    adjMatrix.set(i * adjMatrix.size() + j, temp);*/
                 }
 
                 /*if(leftWeight < 0 || rightWeight < 0 || topWeight < 0 || bottomWeight < 0){
@@ -219,66 +261,235 @@ public class GraphCut {
         }
 
         //System.out.println(adjList);
-        System.out.println(adjMatrix);
-        //return adjList;
+        //System.out.println(Arrays.deepToString(adjMatrix));
+        /*for (int i = 0; i < adjMatrix.length; i++){
+            // Loop through all elements of current row
+            for (int j = 0; j < adjMatrix[i].length; j++)
+                System.out.print(adjMatrix[i][j] + " ");
+            System.out.print("\n");
+        }*/
+
+        /*Vertex[][] newAdjMat = new Vertex[10002][10002];
+        Vertex[] sources = new Vertex[10002];
+        Vertex[] targets = new Vertex[10002];
+
+        for(int i = 1; i < 10001; i++) {
+            if(sourceNodes.contains(i)){
+                newAdjMat[0][i] = new Vertex(false, false, Integer.MAX_VALUE);
+                newAdjMat[i][0] = new Vertex(false, false, Integer.MAX_VALUE);
+            } if(targetNodes.contains(i)) {
+                newAdjMat[0][10001] = new Vertex(false, false, Integer.MAX_VALUE);
+            }
+        }*/
+
+        return adjMatrix;
     }
 
-    public static void edmondsKarp(ArrayList<Node> graph) {
-        while (true) {
-            final Queue<Node> bfsQ = new ArrayDeque<>();
-            boolean[] visitedArray = new boolean[graph.size()];
-
-            bfsQ.add(graph.get(graph.size() - 1));
-
-            for (int i = 0; i < graph.size(); ++i) {
-                visitedArray[i] = false;
-            }
-            visitedArray[graph.size() - 1] = true;
-
-            boolean check = false;
-            Node current = null;
-            while (!bfsQ.isEmpty()) {
-                current = bfsQ.peek();
-                if(current.position.isTarget) {
-                    check = true;
-                    break;
+    public static void edmondsKarp(Vertex[][] graph, int source, int sink) {
+        int u = 0, v = 0;
+        int[][] rGraph = new int[10002][10002];
+        int[] parent = new int[10002];
+        for (int i = 0; i < graph.length; i++) {
+            for (int j = 0; j < graph.length; j++) {
+                if(graph[i][j] != null) {
+                    rGraph[i][j] = graph[i][j].edgeWeight;
+                } else {
+                    rGraph[i][j] = 0;
                 }
-                bfsQ.remove();
-                for (int i = 0; i < graph.size(); ++i) {
-                    if (!visitedArray[i] /*&& capacity[current][i] > flow[current][i]*/) {
-                        visitedArray[i] = true;
-                        bfsQ.add(graph.get(i));
-                        //parent[i] = current;
-                    }
+            }
+        }
+
+        while (bfs(rGraph,source, sink, parent)){
+            int pathFlow = Integer.MAX_VALUE;
+            for (v = sink; v != source; v = parent[v]) {
+                u = parent[v];
+                pathFlow = Math.min(pathFlow, rGraph[u][v]);
+            }
+
+            for (v = sink; v != source; v = parent[v]) {
+                u = parent[v];
+                rGraph[u][v] = rGraph[u][v] - pathFlow;
+                rGraph[v][u] = rGraph[v][u] + pathFlow;
+            }
+        }
+
+        //System.out.println(Arrays.deepToString(rGraph));
+        /*for (int[] ints : rGraph) {
+            for (int j = 0; j < rGraph.length; j++) {
+                System.out.print(ints[j]);
+                System.out.print(" ");
+            }
+            System.out.print("\n");
+        }*/
+        boolean[] isVisited = new boolean[graph.length];
+        dfs(rGraph, source, isVisited);
+
+        for (int i = 0; i < graph.length; i++) {
+            for (int j = 0; j < graph.length; j++) {
+                if (graph[i][j] != null && graph[i][j].edgeWeight > 0 && isVisited[i] && !isVisited[j]) {
+                    System.out.println(i + " - " + j);
                 }
             }
         }
     }
 
-    /*public static int BFS(PixelPos source){
-        boolean[][] visited = new boolean[100][100];
+    private static boolean bfs(int[][] rGraph, int s, int t, int[] parent) {
 
-        LinkedList<PixelPos> pxlQ = new LinkedList<>();
+        boolean[] visited = new boolean[rGraph.length];
 
-        // Mark the current node as visited and enqueue it
-        visited[source.getRowPos()][source.getColPos()] = true;
-        pxlQ.add(source);
+        Queue<Integer> bfsQ = new LinkedList<Integer>();
+        bfsQ.add(s);
+        visited[s] = true;
+        parent[s] = -1;
 
-        while (pxlQ.size() != 0)
-        {
-            source = pxlQ.poll();
-
-            //Iterator<Integer> i = adj[s].listIterator();
-            while (i.hasNext())
-            {
-                int n = i.next();
-                //if (!visited[n])
-                {
-                    //visited[n] = true;
-                    queue.add(n);
+        while (!bfsQ.isEmpty()) {
+            int v = bfsQ.poll();
+            for (int i = 0; i < rGraph.length; i++) {
+                if (rGraph[v][i] > 0 && !visited[i]) {
+                    bfsQ.offer(i);
+                    visited[i] = true;
+                    parent[i] = v;
                 }
             }
         }
-        return 0;
+
+        return visited[t];
+    }
+
+    private static void dfs(int[][] rGraph, int s,
+                            boolean[] visited) {
+        visited[s] = true;
+        for (int i = 0; i < rGraph.length; i++) {
+            if (rGraph[s][i] > 0 && !visited[i]) {
+                dfs(rGraph, i, visited);
+            }
+        }
+    }
+
+    public static void bfsNew(Vertex[][] adjMatrix) {
+        int source = 9999;
+        boolean[] visited = new boolean[10000];
+        boolean isSourceFound = false;
+        Queue<Integer> q = new LinkedList<>();
+        q.add(source);
+
+        while(!q.isEmpty()) {
+            int s = q.poll();
+            for (int i = 0; i < 10000; i++) {
+
+                if(adjMatrix[s][i] != null && adjMatrix[s][i].edgeWeight > 0 && !adjMatrix[s][i].isTarget
+                        && !visited[i]){
+                    q.add(i + 1);
+                    System.out.println(i + 1);
+                }
+            }
+        }
+    }
+
+
+
+    /*private static boolean bfs(int[][] rGraph, int s,
+                               int t, int[] parent) {
+
+        // Create a visited array and mark
+        // all vertices as not visited
+        boolean[] visited = new boolean[rGraph.length];
+
+        // Create a queue, enqueue source vertex
+        // and mark source vertex as visited
+        Queue<Integer> q = new LinkedList<Integer>();
+        q.add(s);
+        visited[s] = true;
+        parent[s] = -1;
+
+        // Standard BFS Loop
+        while (!q.isEmpty()) {
+            int v = q.poll();
+            for (int i = 0; i < rGraph.length; i++) {
+                if (rGraph[v][i] > 0 && !visited[i]) {
+                    q.offer(i);
+                    visited[i] = true;
+                    parent[i] = v;
+                }
+            }
+        }
+
+        // If we reached sink in BFS starting
+        // from source, then return true, else false
+        return (visited[t] == true);
+    }
+
+    // A DFS based function to find all reachable
+    // vertices from s. The function marks visited[i]
+    // as true if i is reachable from s. The initial
+    // values in visited[] must be false. We can also
+    // use BFS to find reachable vertices
+    private static void dfs(int[][] rGraph, int s,
+                            boolean[] visited) {
+        visited[s] = true;
+        for (int i = 0; i < rGraph.length; i++) {
+            if (rGraph[s][i] > 0 && !visited[i]) {
+                dfs(rGraph, i, visited);
+            }
+        }
+    }
+
+    // Prints the minimum s-t cut
+    private static void minCut(Vertex[][] graph, int s, int t) {
+        int u,v;
+
+        // Create a residual graph and fill the residual
+        // graph with given capacities in the original
+        // graph as residual capacities in residual graph
+        // rGraph[i][j] indicates residual capacity of edge i-j
+        int[][] rGraph = new int[graph.length][graph.length];
+        for (int i = 0; i < graph.length; i++) {
+            for (int j = 0; j < graph.length; j++) {
+                if(graph[i][j] != null)
+                    rGraph[i][j] = graph[i][j].edgeWeight;
+                else
+                    rGraph[i][j] = 0;
+            }
+        }
+
+        // This array is filled by BFS and to store path
+        int[] parent = new int[graph.length];
+
+        // Augment the flow while tere is path from source to sink
+        while (bfs(rGraph, s, t, parent)) {
+
+            // Find minimum residual capacity of the edhes
+            // along the path filled by BFS. Or we can say
+            // find the maximum flow through the path found.
+            int pathFlow = Integer.MAX_VALUE;
+            for (v = t; v != s; v = parent[v]) {
+                u = parent[v];
+                pathFlow = Math.min(pathFlow, rGraph[u][v]);
+            }
+
+            // update residual capacities of the edges and
+            // reverse edges along the path
+            for (v = t; v != s; v = parent[v]) {
+                u = parent[v];
+                rGraph[u][v] = rGraph[u][v] - pathFlow;
+                rGraph[v][u] = rGraph[v][u] + pathFlow;
+            }
+        }
+
+        // Flow is maximum now, find vertices reachable from s
+        boolean[] isVisited = new boolean[graph.length];
+        dfs(rGraph, s, isVisited);
+
+        // Print all edges that are from a reachable vertex to
+        // non-reachable vertex in the original graph
+        for (int i = 0; i < graph.length; i++) {
+            for (int j = 0; j < graph.length; j++) {
+                if (graph[i][j] != null && graph[i][j].edgeWeight > 0 && isVisited[i] && !isVisited[j]) {
+                    System.out.println(i + " - " + j);
+                }
+            }
+        }
     }*/
+
+
 }
