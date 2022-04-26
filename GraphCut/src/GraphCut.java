@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Queue;
 import java.util.*;
 
@@ -68,7 +69,9 @@ public class GraphCut {
         for(int i = 6999; i < 9999; i++){
             srcNodes.add(i);
         }
+        System.out.println("Source Pixels");
         System.out.println(srcNodes);
+        System.out.println("Target Pixels");
         System.out.println(targetNodes);
 
         Vertex[][] test = new Vertex[6][6];
@@ -85,7 +88,7 @@ public class GraphCut {
         test[5][0] =new Vertex(false, false, 0);
         long maxFLow = getMaxFlow(10001, 0,adjacencyMatrix(targetPixelValues,srcPixelValues,maskPixelValues,srcNodes,targetNodes));
         //long maxFLow = getMaxFlow(0, 5,test);
-        System.out.println(maxFLow);
+        System.out.println("Max Flow - "+maxFLow);
         writeImage(targetPixelValues, srcPixelValues);
         //getMaxFlow( 0, 5, test);
     }
@@ -242,13 +245,11 @@ public class GraphCut {
                 if (capacity[i][j] != null && capacity[i][j].edgeWeight > 0 && visited[i] && !visited[j]) {
                     System.out.println(i + " - " + j);
                     cuts.add(i);
-                    cuts.add(j);
+                    //cuts.add(j);
                 }
             }
         }
 
-        sourceDfs = new HashSet<>();
-        //dfs(10001, flow);
         return result;
 
     }
@@ -272,7 +273,7 @@ public class GraphCut {
             img.setRGB(x, y, p);
         }
         //writing pixels to an output image buffer
-        for (int y = 0; y < 100; y++)
+        for (int y = 0; y < 30; y++)
         {
             boolean isAfterCut = false;
             for (int x = 0; x < 100; x++)
@@ -280,7 +281,29 @@ public class GraphCut {
                 int pixel = img.getRGB(x, y);
                 Color pxlColor = new Color(pixel, true);
                 if(pxlColor.getRed() == 255) {
-                    isAfterCut = true;
+                    isAfterCut = !isAfterCut;
+                    continue;
+                }
+                int a, r, g, b;
+                a = targetImage.get(y).get(x).getAlpha();
+                r = targetImage.get(y).get(x).getRed();
+                g = targetImage.get(y).get(x).getGreen();
+                b = targetImage.get(y).get(x).getBlue();
+
+                int p = (a<<24) | (r<<16) | (g<<8) | b;
+
+                img.setRGB(x, y, p);
+            }
+        }
+        for (int y = 30; y < 69; y++)
+        {
+            boolean isAfterCut = false;
+            for (int x = 0; x < 100; x++)
+            {
+                int pixel = img.getRGB(x, y);
+                Color pxlColor = new Color(pixel, true);
+                if(pxlColor.getRed() == 255) {
+                    isAfterCut = !isAfterCut;
                     continue;
                 }
                 int a, r, g, b;
@@ -290,12 +313,35 @@ public class GraphCut {
                     g = targetImage.get(y).get(x).getGreen();
                     b = targetImage.get(y).get(x).getBlue();
                 } else {
-                    a = sourceImage.get(y).get(100 - x).getAlpha();
-                    r = sourceImage.get(y).get(100 - x).getRed();
-                    g = sourceImage.get(y).get(100 - x).getGreen();
-                    b = sourceImage.get(y).get(100 - x).getBlue();
+                    a = sourceImage.get(y).get(x).getAlpha();
+                    r = sourceImage.get(y).get(x).getRed();
+                    g = sourceImage.get(y).get(x).getGreen();
+                    b = sourceImage.get(y).get(x).getBlue();
                 }
 
+
+                int p = (a<<24) | (r<<16) | (g<<8) | b;
+
+                img.setRGB(x, y, p);
+            }
+        }
+
+        for (int y = 70; y < 100; y++)
+        {
+            boolean isAfterCut = false;
+            for (int x = 0; x < 100; x++)
+            {
+                int pixel = img.getRGB(x, y);
+                Color pxlColor = new Color(pixel, true);
+                if(pxlColor.getRed() == 255) {
+                    isAfterCut = !isAfterCut;
+                    continue;
+                }
+                int a, r, g, b;
+                a = sourceImage.get(y).get(x).getAlpha();
+                r = sourceImage.get(y).get(x).getRed();
+                g = sourceImage.get(y).get(x).getGreen();
+                b = sourceImage.get(y).get(x).getBlue();
 
                 int p = (a<<24) | (r<<16) | (g<<8) | b;
 
@@ -306,4 +352,5 @@ public class GraphCut {
         File f = new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/output.png");
         ImageIO.write(img, "png", f);
     }
+
 }
