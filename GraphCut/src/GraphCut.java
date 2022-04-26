@@ -8,11 +8,13 @@ import java.util.*;
 
 public class GraphCut {
     public static ArrayList<Integer> cuts;
+    public static HashSet<Integer> sourceDfs;
     public static void main(String[] args) throws IOException {
         ArrayList<ArrayList<RGB>> srcPixelValues = new ArrayList<>();
         ArrayList<ArrayList<RGB>> targetPixelValues = new ArrayList<>();
         ArrayList<ArrayList<RGB>> maskPixelValues = new ArrayList<>();
 
+        //reading pixel values
         File src= new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/src.jpeg");
         File target= new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/target.jpeg");
         File mask= new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/mask.jpeg");
@@ -88,6 +90,7 @@ public class GraphCut {
         //getMaxFlow( 0, 5, test);
     }
 
+    //method for creating adjacency matrix
     public static Vertex[][] adjacencyMatrix(ArrayList<ArrayList<RGB>> target, ArrayList<ArrayList<RGB>> src,
                                              ArrayList<ArrayList<RGB>> mask, HashSet<Integer> sourceNodes,
                                              HashSet<Integer> targetNodes) {
@@ -144,6 +147,7 @@ public class GraphCut {
 
         Vertex[][] newAdjMat = new Vertex[10002][10002];
 
+        //adding source and target to adjacency matrix
         for(int i = 1; i < 10001; i++) {
             if(targetNodes.contains(i)){
                 newAdjMat[0][i] = new Vertex(true, false, Integer.MAX_VALUE);
@@ -161,6 +165,8 @@ public class GraphCut {
             System.arraycopy(adjMatrix[i - 1], 0, newAdjMat[i], 1, 10000);
         }
 
+        //printing adjacency matrix
+        System.out.println("Adjacency list for the graph");
         for(int i = 0; i < newAdjMat.length; i++){
             System.out.print(i + 1 + "->");
             for(int j = 0; j < newAdjMat.length; j++){
@@ -172,6 +178,7 @@ public class GraphCut {
         return newAdjMat;
     }
 
+    //Min cut using edmonds karp
     public static long getMaxFlow(int s, int t, Vertex[][] capacity) {
         boolean[] visited = new boolean[capacity.length];
         int[][] flow = new int[capacity.length][capacity.length];
@@ -228,6 +235,8 @@ public class GraphCut {
             result += flow[s][i];
 
         cuts = new ArrayList<>();
+        //printing vertex numbers for cuts
+        System.out.println("Cuts between vertex numbers in the graph");
         for (int i = 0; i < capacity.length; i++) {
             for (int j = 0; j < capacity.length; j++) {
                 if (capacity[i][j] != null && capacity[i][j].edgeWeight > 0 && visited[i] && !visited[j]) {
@@ -238,6 +247,8 @@ public class GraphCut {
             }
         }
 
+        sourceDfs = new HashSet<>();
+        //dfs(10001, flow);
         return result;
 
     }
@@ -249,6 +260,7 @@ public class GraphCut {
         img = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
 
         Collections.sort(cuts);
+        //adding red line along the image cut
         for(Integer ints : cuts) {
             int x = ints % 100;
             int y = ints / 100;
@@ -259,6 +271,7 @@ public class GraphCut {
 
             img.setRGB(x, y, p);
         }
+        //writing pixels to an output image buffer
         for (int y = 0; y < 100; y++)
         {
             boolean isAfterCut = false;
