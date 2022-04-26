@@ -1,7 +1,16 @@
 public class RGB {
+    public int alpha;
     public int red;
     public int green;
     public int blue;
+
+    public int getAlpha() {
+        return alpha;
+    }
+
+    public void setAlpha(int alpha) {
+        this.alpha = alpha;
+    }
 
     public int getRed() {
         return red;
@@ -27,7 +36,7 @@ public class RGB {
         this.blue = blue;
     }
 
-    public RGB(int red, int green, int blue){
+    public RGB(int alpha, int red, int green, int blue){
         this.red=red;
         this.green=green;
         this.blue=blue;
@@ -42,12 +51,16 @@ public class RGB {
                 + this.getBlue() - pixelVal.getBlue();
     }
 
-    public boolean isBlack() {
+    public boolean isWhite() {
         return this.red == 255 && this.green == 255 && this.blue == 255;
     }
 
-    public boolean isWhite() {
+    public boolean isBlack() {
         return this.red == 0 && this.green == 0 && this.blue == 0;
+    }
+
+    public String toString(){
+        return "{"+this.red+","+this.green+","+this.blue+"}";
     }
 
 }

@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.*;
 
 public class GraphCut {
+    public static ArrayList<Edge> cuts;
     public static void main(String[] args) throws IOException {
         Timestamp start= Timestamp.from(Instant.now());
         //System.out.println("Hello world!");
@@ -34,11 +35,11 @@ public class GraphCut {
             ArrayList<RGB> rowValues = new ArrayList<>();
             for (int i = 0; i < srcImg.getHeight(); i++) {
                 //Retrieving contents of a pixel
-                int pixel = srcImg.getRGB(j,i);
+                int pixel = srcImg.getRGB(i,j);
                 //Creating a Color object from pixel value
                 Color color = new Color(pixel, true);
                 //Retrieving the R G B values
-                RGB temp = new RGB(color.getRed(),color.getGreen(),color.getBlue());
+                RGB temp = new RGB(color.getAlpha(), color.getRed(),color.getGreen(),color.getBlue());
                 rowValues.add(temp);
             }
             srcPixelValues.add(rowValues);
@@ -48,37 +49,48 @@ public class GraphCut {
             ArrayList<RGB> rowValues = new ArrayList<>();
             for (int i = 0; i < targetImg.getHeight(); i++) {
                 //Retrieving contents of a pixel
-                int pixel = targetImg.getRGB(j,i);
+                int pixel = targetImg.getRGB(i,j);
                 //Creating a Color object from pixel value
                 Color color = new Color(pixel, true);
                 //Retrieving the R G B values
-                RGB temp = new RGB(color.getRed(),color.getGreen(),color.getBlue());
+                RGB temp = new RGB(color.getAlpha(), color.getRed(),color.getGreen(),color.getBlue());
                 rowValues.add(temp);
             }
             targetPixelValues.add(rowValues);
         }
         HashSet<Integer> srcNodes = new HashSet<>();
         HashSet<Integer> targetNodes = new HashSet<>();
+        HashSet<Integer> overlapNodes = new HashSet<>();
 
+        //writeImage(targetPixelValues, srcPixelValues);
+        //writeImage();
         for (int j = 0; j < maskImg.getWidth(); j++) {
             ArrayList<RGB> rowValues = new ArrayList<>();
             for (int i = 0; i < maskImg.getHeight(); i++) {
                 //Retrieving contents of a pixel
-                int pixel = maskImg.getRGB(j,i);
+                int pixel = maskImg.getRGB(i,j);
                 //Creating a Color object from pixel value
                 Color color = new Color(pixel, true);
                 //Retrieving the R G B values
-                RGB temp = new RGB(color.getRed(),color.getGreen(),color.getBlue());
-                if(temp.isWhite()){
-                    srcNodes.add(i * 100 + j);
-                } else {
-                    targetNodes.add(i * 100 + j);
-                }
+                RGB temp = new RGB(color.getAlpha(), color.getRed(),color.getGreen(),color.getBlue());
                 rowValues.add(temp);
             }
             maskPixelValues.add(rowValues);
 
         }
+
+        for(int i = 0; i < 2999; i++){
+            targetNodes.add(i);
+        }
+        for(int i = 6999; i < 9999; i++){
+            srcNodes.add(i);
+        }
+        //System.out.println(maskPixelValues);
+        //int pixel = maskImg.getRGB(0,0);
+        //Color color = new Color(pixel, true);
+        System.out.println(srcNodes);
+        System.out.println(targetNodes);
+
         //System.out.println(maskPixelValues.size()+" "+maskPixelValues.get(0).size());
 
         //edmondsKarp(buildGraph(targetPixelValues, srcPixelValues, maskPixelValues));
@@ -97,17 +109,18 @@ public class GraphCut {
         test[4][3] =new Vertex(false, false, 7);
         test[4][5] =new Vertex(false, false, 4);
         test[5][0] =new Vertex(false, false, 0);
-
         int graph[][] = { {0, 16, 13, 0, 0, 0},
-                {0, 0, 10, 12, 0, 0},
-                {0, 4, 0, 0, 14, 0},
-                {0, 0, 9, 0, 0, 20},
-                {0, 0, 0, 7, 0, 4},
-                {0, 0, 0, 0, 0, 0}
-        };
-        edmondsKarp(adjacencyMatrix(targetPixelValues, srcPixelValues, maskPixelValues, srcNodes, targetNodes),
-                0, 9999);
-        //minCut(test, 0, 5);
+                            {0, 0, 10, 12, 0, 0},
+                            {0, 4, 0, 0, 14, 0},
+                            {0, 0, 9, 0, 0, 20},
+                            {0, 0, 0, 7, 0, 4},
+                            {0, 0, 0, 0, 0, 0}
+                    };
+        long maxFLow = getMaxFlow(10001, 0,adjacencyMatrix(targetPixelValues,srcPixelValues,maskPixelValues,srcNodes,targetNodes));
+        //long maxFLow = getMaxFlow(0, 5,test);
+        System.out.println(maxFLow);
+        writeImage(targetPixelValues, srcPixelValues);
+        //getMaxFlow( 0, 5, test);
         //bfsNew(adjacencyMatrix(targetPixelValues, srcPixelValues, maskPixelValues, srcNodes, targetNodes));
         Timestamp end= Timestamp.from(Instant.now());
 
@@ -269,20 +282,36 @@ public class GraphCut {
             System.out.print("\n");
         }*/
 
-        /*Vertex[][] newAdjMat = new Vertex[10002][10002];
+        Vertex[][] newAdjMat = new Vertex[10002][10002];
         Vertex[] sources = new Vertex[10002];
         Vertex[] targets = new Vertex[10002];
 
         for(int i = 1; i < 10001; i++) {
-            if(sourceNodes.contains(i)){
-                newAdjMat[0][i] = new Vertex(false, false, Integer.MAX_VALUE);
-                newAdjMat[i][0] = new Vertex(false, false, Integer.MAX_VALUE);
-            } if(targetNodes.contains(i)) {
-                newAdjMat[0][10001] = new Vertex(false, false, Integer.MAX_VALUE);
+            if(targetNodes.contains(i)){
+                newAdjMat[0][i] = new Vertex(true, false, Integer.MAX_VALUE);
+                newAdjMat[i][0] = new Vertex(true, false, Integer.MAX_VALUE);
+            } else if(sourceNodes.contains(i)) {
+                newAdjMat[10001][i] = new Vertex(false, true, Integer.MAX_VALUE);
+                newAdjMat[i][10001] = new Vertex(false, true, Integer.MAX_VALUE);
+            } else {
+                newAdjMat[0][i] = new Vertex(false, false, 0);
+                newAdjMat[i][0] = new Vertex(false, false, 0);
             }
-        }*/
+        }
 
-        return adjMatrix;
+        for(int i = 1; i < 10001; i++){
+            System.arraycopy(adjMatrix[i - 1], 0, newAdjMat[i], 1, 10000);
+        }
+
+        for(int i = 0; i < newAdjMat.length; i++){
+            System.out.print(i + 1 + "->");
+            for(int j = 0; j < newAdjMat.length; j++){
+                if(newAdjMat[i][j] != null && newAdjMat[i][j].edgeWeight > 0 )
+                    System.out.print(j + 1 +", ");
+            }
+            System.out.print("\n");
+        }
+        return newAdjMat;
     }
 
     public static void edmondsKarp(Vertex[][] graph, int source, int sink) {
@@ -386,110 +415,155 @@ public class GraphCut {
         }
     }
 
+    public static long getMaxFlow(int s, int t, Vertex[][] capacity) {
+        boolean[] visited = new boolean[capacity.length];
+        int[][] flow = new int[capacity.length][capacity.length];
+        int[] parent = new int[capacity.length];
+        while (true) {
+            final Queue<Integer> Q = new ArrayDeque<Integer>();
+            Q.add(s);
 
+            for (int i = 0; i < capacity.length; ++i)
+                visited[i] = false;
+            visited[s] = true;
 
-    /*private static boolean bfs(int[][] rGraph, int s,
-                               int t, int[] parent) {
-
-        // Create a visited array and mark
-        // all vertices as not visited
-        boolean[] visited = new boolean[rGraph.length];
-
-        // Create a queue, enqueue source vertex
-        // and mark source vertex as visited
-        Queue<Integer> q = new LinkedList<Integer>();
-        q.add(s);
-        visited[s] = true;
-        parent[s] = -1;
-
-        // Standard BFS Loop
-        while (!q.isEmpty()) {
-            int v = q.poll();
-            for (int i = 0; i < rGraph.length; i++) {
-                if (rGraph[v][i] > 0 && !visited[i]) {
-                    q.offer(i);
-                    visited[i] = true;
-                    parent[i] = v;
+            boolean check = false;
+            int current;
+            while (!Q.isEmpty()) {
+                current = Q.peek();
+                if (current == t) {
+                    check = true;
+                    break;
+                }
+                Q.remove();
+                for (int i = 0; i < capacity.length; ++i) {
+                    if (capacity[current][i] != null && !visited[i] && capacity[current][i].edgeWeight > flow[current][i]) {
+                        visited[i] = true;
+                        Q.add(i);
+                        parent[i] = current;
+                    }
                 }
             }
-        }
+            if (!check)
+                break;
 
-        // If we reached sink in BFS starting
-        // from source, then return true, else false
-        return (visited[t] == true);
-    }
+            long temp;
+            if (capacity[parent[t]][t] != null)
+                temp = capacity[parent[t]][t].edgeWeight - flow[parent[t]][t];
+            else
+                temp = -flow[parent[t]][t];
+            for (int i = t; i != s; i = parent[i])
+                if (capacity[parent[i]][i] != null){
+                    temp = Math.min(temp, (capacity[parent[i]][i].edgeWeight- flow[parent[i]][i]));
+                } else {
+                    temp = Math.min(temp, (-flow[parent[i]][i]));
+                }
 
-    // A DFS based function to find all reachable
-    // vertices from s. The function marks visited[i]
-    // as true if i is reachable from s. The initial
-    // values in visited[] must be false. We can also
-    // use BFS to find reachable vertices
-    private static void dfs(int[][] rGraph, int s,
-                            boolean[] visited) {
-        visited[s] = true;
-        for (int i = 0; i < rGraph.length; i++) {
-            if (rGraph[s][i] > 0 && !visited[i]) {
-                dfs(rGraph, i, visited);
-            }
-        }
-    }
 
-    // Prints the minimum s-t cut
-    private static void minCut(Vertex[][] graph, int s, int t) {
-        int u,v;
-
-        // Create a residual graph and fill the residual
-        // graph with given capacities in the original
-        // graph as residual capacities in residual graph
-        // rGraph[i][j] indicates residual capacity of edge i-j
-        int[][] rGraph = new int[graph.length][graph.length];
-        for (int i = 0; i < graph.length; i++) {
-            for (int j = 0; j < graph.length; j++) {
-                if(graph[i][j] != null)
-                    rGraph[i][j] = graph[i][j].edgeWeight;
-                else
-                    rGraph[i][j] = 0;
+            for (int i = t; i != s; i = parent[i]) {
+                flow[parent[i]][i] += temp;
+                flow[i][parent[i]] -= temp;
             }
         }
 
-        // This array is filled by BFS and to store path
-        int[] parent = new int[graph.length];
+        long result = 0;
+        for (int i = 0; i < capacity.length; ++i)
+            result += flow[s][i];
 
-        // Augment the flow while tere is path from source to sink
-        while (bfs(rGraph, s, t, parent)) {
-
-            // Find minimum residual capacity of the edhes
-            // along the path filled by BFS. Or we can say
-            // find the maximum flow through the path found.
-            int pathFlow = Integer.MAX_VALUE;
-            for (v = t; v != s; v = parent[v]) {
-                u = parent[v];
-                pathFlow = Math.min(pathFlow, rGraph[u][v]);
-            }
-
-            // update residual capacities of the edges and
-            // reverse edges along the path
-            for (v = t; v != s; v = parent[v]) {
-                u = parent[v];
-                rGraph[u][v] = rGraph[u][v] - pathFlow;
-                rGraph[v][u] = rGraph[v][u] + pathFlow;
-            }
-        }
-
-        // Flow is maximum now, find vertices reachable from s
-        boolean[] isVisited = new boolean[graph.length];
-        dfs(rGraph, s, isVisited);
-
-        // Print all edges that are from a reachable vertex to
-        // non-reachable vertex in the original graph
-        for (int i = 0; i < graph.length; i++) {
-            for (int j = 0; j < graph.length; j++) {
-                if (graph[i][j] != null && graph[i][j].edgeWeight > 0 && isVisited[i] && !isVisited[j]) {
+        cuts = new ArrayList<>();
+        for (int i = 0; i < capacity.length; i++) {
+            for (int j = 0; j < capacity.length; j++) {
+                if (capacity[i][j] != null && capacity[i][j].edgeWeight > 0 && visited[i] && !visited[j]) {
                     System.out.println(i + " - " + j);
+                    Edge temp = new Edge(j, i);
+                    cuts.add(temp);
                 }
             }
         }
-    }*/
+
+        return result;
+
+    }
+
+    public static void writeImage(ArrayList<ArrayList<RGB>> targetImage, ArrayList<ArrayList<RGB>> sourceImage)
+            throws IOException {
+        int height = 100, width =  100;
+        BufferedImage img = null;
+        img = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
 
 
+        int i = 0;
+        int pixelNumber = 1;
+        for (int y = 0; y < 30; y++)
+        {
+            for (int x = 0; x < 100; x++)
+            {
+                int a, r, g, b;
+                a = targetImage.get(y).get(x).getAlpha();
+                r = targetImage.get(y).get(x).getRed();
+                g = targetImage.get(y).get(x).getGreen();
+                b = targetImage.get(y).get(x).getBlue();
+
+                int p = (a<<24) | (r<<16) | (g<<8) | b;
+
+                img.setRGB(x, y, p);
+            }
+        }
+
+        for (int y = 69; y < 100; y++)
+        {
+            for (int x = 0; x < 100; x++)
+            {
+                int a, r, g, b;
+                a = sourceImage.get(y).get(x).getAlpha();
+                r = sourceImage.get(y).get(x).getRed();
+                g = sourceImage.get(y).get(x).getGreen();
+                b = sourceImage.get(y).get(x).getBlue();
+
+                int p = (a<<24) | (r<<16) | (g<<8) | b;
+
+                img.setRGB(x, y, p);
+            }
+        }
+
+        for (int y = 30; y < 70; y++)
+        {
+            for (int x = 0; x < 100; x++)
+            {
+                int a, r, g, b;
+                a = sourceImage.get(y).get(x).getAlpha();
+                r = sourceImage.get(y).get(x).getRed();
+                g = sourceImage.get(y).get(x).getGreen();
+                b = sourceImage.get(y).get(x).getBlue();
+                int p = (a<<24) | (r<<16) | (g<<8) | b;
+
+                img.setRGB(x, y, p);
+
+                pixelNumber++;
+            }
+        }
+
+        /*if(i < cuts.size()) {
+            if(pixelNumber < cuts.get(i).getTargetVertex()){
+                a = targetImage.get(y).get(x).getAlpha();
+                r = targetImage.get(y).get(x).getRed();
+                g = targetImage.get(y).get(x).getGreen();
+                b = targetImage.get(y).get(x).getBlue();
+            } else {
+                i++;
+                a = sourceImage.get(100 - y).get(x).getAlpha();
+                r = sourceImage.get(100 - y).get(x).getRed();
+                g = sourceImage.get(100 - y).get(x).getGreen();
+                b = sourceImage.get(100 - y).get(x).getBlue();
+            }
+        } else {
+            a = sourceImage.get(100 - y).get(x).getAlpha();
+            r = sourceImage.get(100 - y).get(x).getRed();
+            g = sourceImage.get(100 - y).get(x).getGreen();
+            b = sourceImage.get(100 - y).get(x).getBlue();
+        }*/
+
+        File f = new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/output.png");
+        ImageIO.write(img, "png", f);
+    }
 }
