@@ -6,9 +6,10 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
+import java.util.List;
 
 public class GraphCut {
-    public static ArrayList<Edge> cuts;
+    public static ArrayList<Integer> cuts;
     public static void main(String[] args) throws IOException {
         Timestamp start= Timestamp.from(Instant.now());
         //System.out.println("Hello world!");
@@ -314,107 +315,6 @@ public class GraphCut {
         return newAdjMat;
     }
 
-    public static void edmondsKarp(Vertex[][] graph, int source, int sink) {
-        int u = 0, v = 0;
-        int[][] rGraph = new int[10002][10002];
-        int[] parent = new int[10002];
-        for (int i = 0; i < graph.length; i++) {
-            for (int j = 0; j < graph.length; j++) {
-                if(graph[i][j] != null) {
-                    rGraph[i][j] = graph[i][j].edgeWeight;
-                } else {
-                    rGraph[i][j] = 0;
-                }
-            }
-        }
-
-        while (bfs(rGraph,source, sink, parent)){
-            int pathFlow = Integer.MAX_VALUE;
-            for (v = sink; v != source; v = parent[v]) {
-                u = parent[v];
-                pathFlow = Math.min(pathFlow, rGraph[u][v]);
-            }
-
-            for (v = sink; v != source; v = parent[v]) {
-                u = parent[v];
-                rGraph[u][v] = rGraph[u][v] - pathFlow;
-                rGraph[v][u] = rGraph[v][u] + pathFlow;
-            }
-        }
-
-        //System.out.println(Arrays.deepToString(rGraph));
-        /*for (int[] ints : rGraph) {
-            for (int j = 0; j < rGraph.length; j++) {
-                System.out.print(ints[j]);
-                System.out.print(" ");
-            }
-            System.out.print("\n");
-        }*/
-        boolean[] isVisited = new boolean[graph.length];
-        dfs(rGraph, source, isVisited);
-
-        for (int i = 0; i < graph.length; i++) {
-            for (int j = 0; j < graph.length; j++) {
-                if (graph[i][j] != null && graph[i][j].edgeWeight > 0 && isVisited[i] && !isVisited[j]) {
-                    System.out.println(i + " - " + j);
-                }
-            }
-        }
-    }
-
-    private static boolean bfs(int[][] rGraph, int s, int t, int[] parent) {
-
-        boolean[] visited = new boolean[rGraph.length];
-
-        Queue<Integer> bfsQ = new LinkedList<Integer>();
-        bfsQ.add(s);
-        visited[s] = true;
-        parent[s] = -1;
-
-        while (!bfsQ.isEmpty()) {
-            int v = bfsQ.poll();
-            for (int i = 0; i < rGraph.length; i++) {
-                if (rGraph[v][i] > 0 && !visited[i]) {
-                    bfsQ.offer(i);
-                    visited[i] = true;
-                    parent[i] = v;
-                }
-            }
-        }
-
-        return visited[t];
-    }
-
-    private static void dfs(int[][] rGraph, int s,
-                            boolean[] visited) {
-        visited[s] = true;
-        for (int i = 0; i < rGraph.length; i++) {
-            if (rGraph[s][i] > 0 && !visited[i]) {
-                dfs(rGraph, i, visited);
-            }
-        }
-    }
-
-    public static void bfsNew(Vertex[][] adjMatrix) {
-        int source = 9999;
-        boolean[] visited = new boolean[10000];
-        boolean isSourceFound = false;
-        Queue<Integer> q = new LinkedList<>();
-        q.add(source);
-
-        while(!q.isEmpty()) {
-            int s = q.poll();
-            for (int i = 0; i < 10000; i++) {
-
-                if(adjMatrix[s][i] != null && adjMatrix[s][i].edgeWeight > 0 && !adjMatrix[s][i].isTarget
-                        && !visited[i]){
-                    q.add(i + 1);
-                    System.out.println(i + 1);
-                }
-            }
-        }
-    }
-
     public static long getMaxFlow(int s, int t, Vertex[][] capacity) {
         boolean[] visited = new boolean[capacity.length];
         int[][] flow = new int[capacity.length][capacity.length];
@@ -475,8 +375,8 @@ public class GraphCut {
             for (int j = 0; j < capacity.length; j++) {
                 if (capacity[i][j] != null && capacity[i][j].edgeWeight > 0 && visited[i] && !visited[j]) {
                     System.out.println(i + " - " + j);
-                    Edge temp = new Edge(j, i);
-                    cuts.add(temp);
+                    cuts.add(i);
+                    cuts.add(j);
                 }
             }
         }
@@ -491,77 +391,47 @@ public class GraphCut {
         BufferedImage img = null;
         img = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
 
+        Collections.sort(cuts);
+        for(Integer ints : cuts) {
+            int x = ints % 100;
+            int y = ints / 100;
 
-        int i = 0;
-        int pixelNumber = 1;
-        for (int y = 0; y < 30; y++)
+            int a = 0, r = 255, g = 0, b = 0;
+
+            int p = (a<<24) | (r<<16) | (g<<8) | b;
+
+            img.setRGB(x, y, p);
+        }
+        for (int y = 0; y < 100; y++)
         {
+            boolean isAfterCut = false;
             for (int x = 0; x < 100; x++)
             {
-                int a, r, g, b;
-                a = targetImage.get(y).get(x).getAlpha();
-                r = targetImage.get(y).get(x).getRed();
-                g = targetImage.get(y).get(x).getGreen();
-                b = targetImage.get(y).get(x).getBlue();
+                int pixel = img.getRGB(x, y);
+                Color pxlColor = new Color(pixel, true);
+                if(pxlColor.getRed() == 255) {
+                    isAfterCut = true;
+                    continue;
+                }
+                int a = 0, r = 0, g = 0, b = 0;
+                if(!isAfterCut) {
+                    a = targetImage.get(y).get(x).getAlpha();
+                    r = targetImage.get(y).get(x).getRed();
+                    g = targetImage.get(y).get(x).getGreen();
+                    b = targetImage.get(y).get(x).getBlue();
+                } else {
+                    a = sourceImage.get(y).get(100 - x).getAlpha();
+                    r = sourceImage.get(y).get(100 - x).getRed();
+                    g = sourceImage.get(y).get(100 - x).getGreen();
+                    b = sourceImage.get(y).get(100 - x).getBlue();
+                }
+
 
                 int p = (a<<24) | (r<<16) | (g<<8) | b;
 
                 img.setRGB(x, y, p);
             }
         }
-
-        for (int y = 69; y < 100; y++)
-        {
-            for (int x = 0; x < 100; x++)
-            {
-                int a, r, g, b;
-                a = sourceImage.get(y).get(x).getAlpha();
-                r = sourceImage.get(y).get(x).getRed();
-                g = sourceImage.get(y).get(x).getGreen();
-                b = sourceImage.get(y).get(x).getBlue();
-
-                int p = (a<<24) | (r<<16) | (g<<8) | b;
-
-                img.setRGB(x, y, p);
-            }
-        }
-
-        for (int y = 30; y < 70; y++)
-        {
-            for (int x = 0; x < 100; x++)
-            {
-                int a, r, g, b;
-                a = sourceImage.get(y).get(x).getAlpha();
-                r = sourceImage.get(y).get(x).getRed();
-                g = sourceImage.get(y).get(x).getGreen();
-                b = sourceImage.get(y).get(x).getBlue();
-                int p = (a<<24) | (r<<16) | (g<<8) | b;
-
-                img.setRGB(x, y, p);
-
-                pixelNumber++;
-            }
-        }
-
-        /*if(i < cuts.size()) {
-            if(pixelNumber < cuts.get(i).getTargetVertex()){
-                a = targetImage.get(y).get(x).getAlpha();
-                r = targetImage.get(y).get(x).getRed();
-                g = targetImage.get(y).get(x).getGreen();
-                b = targetImage.get(y).get(x).getBlue();
-            } else {
-                i++;
-                a = sourceImage.get(100 - y).get(x).getAlpha();
-                r = sourceImage.get(100 - y).get(x).getRed();
-                g = sourceImage.get(100 - y).get(x).getGreen();
-                b = sourceImage.get(100 - y).get(x).getBlue();
-            }
-        } else {
-            a = sourceImage.get(100 - y).get(x).getAlpha();
-            r = sourceImage.get(100 - y).get(x).getRed();
-            g = sourceImage.get(100 - y).get(x).getGreen();
-            b = sourceImage.get(100 - y).get(x).getBlue();
-        }*/
 
         File f = new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/output.png");
         ImageIO.write(img, "png", f);
