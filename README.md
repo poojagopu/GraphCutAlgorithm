@@ -5,7 +5,7 @@ achada1@umbc.edu, Akshith Reddy Chada
 
 We have done Image synthesis for the hut and mountain image. We have resized the image for memory purposes. A larger 
 image means more nodes and a larger adjacency matrix. Taking a very large adjacency matrix is causing a No memory exception.
-
+If there is any such exception while running the program please change the -Xmx1024m
 For compiling and running the code run the following commands
 Change file name in line 11
 $ cd GraphCut/src
