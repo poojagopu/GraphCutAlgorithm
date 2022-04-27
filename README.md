@@ -20,9 +20,9 @@ sink nodes, adjacency list for the matrix we constructed, the cuts between verte
 
 For compiling and running the code run make the following changes and the following commands 
 Change file name in line 11
-$ cd GraphCut/src
-$ javac GraphCut.java
-$ java GraphCut
+* $ cd GraphCut/src
+* $ javac GraphCut.java
+* $ java GraphCut
 
 Interpreting the output
 The code dumps the following data to stdout
