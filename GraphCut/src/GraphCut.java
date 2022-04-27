@@ -3,22 +3,21 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Queue;
 import java.util.*;
 
 public class GraphCut {
     public static ArrayList<Integer> cuts;
-    public static HashSet<Integer> sourceDfs;
+    public static String cd = "/Users/akshithreddyc/Desktop/Workplace/GraphCut/";
     public static void main(String[] args) throws IOException {
         ArrayList<ArrayList<RGB>> srcPixelValues = new ArrayList<>();
         ArrayList<ArrayList<RGB>> targetPixelValues = new ArrayList<>();
         ArrayList<ArrayList<RGB>> maskPixelValues = new ArrayList<>();
 
         //reading pixel values
-        File src= new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/src.jpeg");
-        File target= new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/target.jpeg");
-        File mask= new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/mask.jpeg");
+        File src= new File(cd + "src.jpeg");
+        File target= new File(cd + "target.jpeg");
+        File mask= new File(cd + "mask.jpeg");
         BufferedImage srcImg = ImageIO.read(src);
         BufferedImage targetImg = ImageIO.read(target);
         BufferedImage maskImg = ImageIO.read(mask);
@@ -349,7 +348,7 @@ public class GraphCut {
             }
         }
 
-        File f = new File("/Users/akshithreddyc/Desktop/Workplace/GraphCut/output.png");
+        File f = new File(cd + "output.png");
         ImageIO.write(img, "png", f);
     }
 

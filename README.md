@@ -7,7 +7,7 @@ We have done Image synthesis for the hut and mountain image. We have resized the
 image means more nodes and a larger adjacency matrix. Taking a very large adjacency matrix is causing a No memory exception.
 
 For compiling and running the code run the following commands
-Change file name in line 18, 19, 20 and 252
+Change file name in line 11
 $ cd GraphCut/src
 $ javac GraphCut.java
 $ java GraphCut
@@ -18,4 +18,5 @@ The code dumps the following data to stdout
 * Cuts between vertexes
 * Max flow of the graph
 
-There is a log.txt file which is the output of my program. This is just to show that the code is working.
+There is a log.txt file which is the output of my program. This is just to show that the code is working. A screenshot of 
+the output is saved as screenshot.png
